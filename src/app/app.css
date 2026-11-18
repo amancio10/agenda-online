@@ -15,7 +15,7 @@
 .brand {
   font-weight: 700;
   font-size: 1.1rem;
-  color: #1f2937;
+  color: var(--text);
   text-decoration: none;
 }
 
@@ -25,7 +25,7 @@ nav {
 }
 
 nav a {
-  color: #4b5563;
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.9rem;
   padding: 6px 12px;
@@ -33,6 +33,44 @@ nav a {
 }
 
 nav a.active {
-  background: #e8f1fe;
-  color: #3b82f6;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+nav {
+  align-items: center;
+}
+
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-soft-hover);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
