@@ -1,0 +1,151 @@
+<section class="stage">
+  <app-profile-card class="profile" />
+
+  <div class="card">
+    <div class="calendar">
+      <header class="month-nav">
+        <button
+          type="button"
+          class="nav-btn"
+          (click)="prevMonth()"
+          [disabled]="!canGoPrev()"
+          aria-label="Mês anterior"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+        <h2 aria-live="polite">{{ monthLabel() }}</h2>
+        <button
+          type="button"
+          class="nav-btn"
+          (click)="nextMonth()"
+          [disabled]="!canGoNext()"
+          aria-label="Próximo mês"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      </header>
+
+      <div class="grid weekdays" aria-hidden="true">
+        @for (label of weekdayLabels; track label) {
+          <span>{{ label }}</span>
+        }
+      </div>
+
+      <div class="grid days">
+        @for (cell of cells(); track $index) {
+          @if (cell.date; as date) {
+            <button
+              type="button"
+              class="day"
+              [class.available]="cell.available"
+              [class.selected]="cell.selected"
+              [class.has-booking]="cell.hasBooking"
+              [class.today]="cell.today"
+              [disabled]="!cell.available"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-label]="dayAriaLabel(cell)"
+              (click)="selectDate(date)"
+            >
+              {{ date.getDate() }}
+            </button>
+          } @else {
+            <span></span>
+          }
+        }
+      </div>
+
+      <p class="legend"><span class="dot"></span> dias com reuniões marcadas</p>
+    </div>
+
+    <div class="side">
+      @switch (step()) {
+        @case ('pick') {
+          @if (selectedDate(); as date) {
+            <h3 class="weekday">{{ formatWeekday(date) }}</h3>
+            <p class="date-label">{{ formatLongDate(date) }}</p>
+
+            @if (error()) {
+              <p class="error" role="alert">{{ error() }}</p>
+            }
+
+            <div class="slots">
+              @for (slot of slots(); track slot.time) {
+                @if (slot.time === selectedTime()) {
+                  <div class="slot-row">
+                    <button type="button" class="slot active" (click)="toggleTime(slot.time)">
+                      {{ slot.time }}
+                    </button>
+                    <button type="button" class="book" (click)="goToForm()">Agendar</button>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="slot"
+                    [class.taken]="slot.booked"
+                    [disabled]="slot.booked"
+                    [attr.aria-label]="slot.booked ? slot.time + ' (ocupado)' : slot.time"
+                    (click)="toggleTime(slot.time)"
+                  >
+                    {{ slot.time }}
+                  </button>
+                }
+              } @empty {
+                <p class="muted">Nenhum horário disponível neste dia.</p>
+              }
+            </div>
+          } @else {
+            <p class="muted center">Não há dias disponíveis no momento.</p>
+          }
+        }
+
+        @case ('form') {
+          <button type="button" class="link" (click)="back()">‹ Voltar</button>
+          <h3 class="weekday">Confirmar reunião</h3>
+          <p class="date-label">
+            {{ formatWeekday(selectedDate()!) }}, {{ formatLongDate(selectedDate()!) }} às
+            {{ selectedTime() }}
+          </p>
+
+          <form [formGroup]="form" (ngSubmit)="confirm()" novalidate>
+            <label>
+              Nome
+              <input formControlName="name" autocomplete="name" />
+              @if (form.controls.name.touched && form.controls.name.invalid) {
+                <small class="error">Informe seu nome.</small>
+              }
+            </label>
+            <label>
+              E-mail
+              <input formControlName="email" type="email" autocomplete="email" />
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <small class="error">Informe um e-mail válido.</small>
+              }
+            </label>
+            <label>
+              <span>Assunto <span class="muted">(opcional)</span></span>
+              <textarea formControlName="topic" rows="3"></textarea>
+            </label>
+            <button type="submit" class="book full">Confirmar agendamento</button>
+          </form>
+        }
+
+        @case ('done') {
+          @if (confirmed(); as booking) {
+            <div class="done">
+              <div class="check" aria-hidden="true">✓</div>
+              <h3 class="weekday">Reunião agendada!</h3>
+              <p class="date-label">
+                {{ formatWeekday(selectedDate()!) }}, {{ formatLongDate(selectedDate()!) }} às
+                {{ booking.time }}
+              </p>
+              <p class="muted">Obrigado, {{ booking.name }}. Até lá!</p>
+              <button type="button" class="slot" (click)="bookAnother()">
+                Agendar outro horário
+              </button>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+</section>

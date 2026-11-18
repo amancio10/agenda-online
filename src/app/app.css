@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1f2937;
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  gap: 6px;
+}
+
+nav a {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+nav a.active {
+  background: #e8f1fe;
+  color: #3b82f6;
+}

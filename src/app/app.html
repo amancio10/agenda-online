@@ -1,0 +1,13 @@
+<header class="topbar">
+  <a routerLink="/" class="brand">Agenda online</a>
+  <nav>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Agendar
+    </a>
+    <a routerLink="/minha-agenda" routerLinkActive="active">Minha agenda</a>
+  </nav>
+</header>
+
+<main>
+  <router-outlet />
+</main>

@@ -1,0 +1,45 @@
+<section class="panel">
+  <h2>Minha agenda</h2>
+
+  <h3>Próximas reuniões</h3>
+  @for (group of upcoming(); track group.date) {
+    <div class="day">
+      <p class="day-label">{{ group.label }}</p>
+      @for (b of group.bookings; track b.id) {
+        <article class="booking">
+          <span class="time">{{ b.time }}</span>
+          <div class="info">
+            <strong>{{ b.name }}</strong>
+            <a [href]="'mailto:' + b.email">{{ b.email }}</a>
+            @if (b.topic) {
+              <p>{{ b.topic }}</p>
+            }
+          </div>
+          <button type="button" class="cancel" (click)="cancel(b)">Cancelar</button>
+        </article>
+      }
+    </div>
+  } @empty {
+    <p class="empty">
+      Nenhuma reunião marcada ainda. <a routerLink="/">Ver calendário</a>
+    </p>
+  }
+
+  @if (past().length) {
+    <h3>Anteriores</h3>
+    @for (group of past(); track group.date) {
+      <div class="day past">
+        <p class="day-label">{{ group.label }}</p>
+        @for (b of group.bookings; track b.id) {
+          <article class="booking">
+            <span class="time">{{ b.time }}</span>
+            <div class="info">
+              <strong>{{ b.name }}</strong>
+              <span>{{ b.email }}</span>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</section>

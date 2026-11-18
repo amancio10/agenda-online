@@ -1,0 +1,56 @@
+<aside class="profile" aria-label="Perfil">
+  <img class="photo" [src]="profile.photo" [alt]="'Foto de ' + profile.name" />
+  <h2 class="name">{{ profile.name }}</h2>
+  @if (profile.profession) {
+    <p class="profession">{{ profile.profession }}</p>
+  }
+
+  <ul class="details">
+    @if (profile.education) {
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2 9l10-5 10 5-10 5z" />
+          <path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
+        </svg>
+        <span>{{ profile.education }}</span>
+      </li>
+    }
+    @if (profile.location) {
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </svg>
+        <span>{{ profile.location }}</span>
+      </li>
+    }
+    @if (profile.portfolio) {
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" />
+        </svg>
+        <a [href]="profile.portfolio" target="_blank" rel="noopener">Portfólio</a>
+      </li>
+    }
+    <li>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <span>Reuniões de {{ meetingMinutes }} min</span>
+    </li>
+  </ul>
+
+  @if (profile.linkedin) {
+    <a class="linkedin" [href]="profile.linkedin" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          class="fill"
+          d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.75h4V21H3zM9.5 9.75h3.8v1.6h.06c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.77 2.65 4.77 6.1V21h-4v-4.95c0-1.18-.02-2.7-1.65-2.7-1.65 0-1.9 1.29-1.9 2.62V21h-4z"
+        />
+      </svg>
+      Ver no LinkedIn
+    </a>
+  }
+</aside>
