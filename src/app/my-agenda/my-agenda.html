@@ -29,7 +29,11 @@
     </button>
   </div>
 
-  @if (tab() === 'upcoming') {
+  @if (loading() && !upcomingCount() && !doneCount()) {
+    <p class="empty" role="status">
+      Carregando reuniões… (na primeira visita o servidor pode levar até 1 minuto para iniciar)
+    </p>
+  } @else if (tab() === 'upcoming') {
     <div role="tabpanel" id="panel-upcoming" aria-labelledby="tab-upcoming">
       @for (group of upcoming(); track group.date) {
         <div class="day">
@@ -39,9 +43,7 @@
           }
         </div>
       } @empty {
-        <p class="empty">
-          Nenhuma reunião marcada. <a routerLink="/">Ver calendário</a>
-        </p>
+        <p class="empty">Nenhuma reunião marcada. <a routerLink="/">Ver calendário</a></p>
       }
     </div>
   } @else {

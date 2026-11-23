@@ -359,3 +359,38 @@ p.error.load-error {
     gap: 28px;
   }
 }
+
+/* ---------- Carregando (API acordando) ---------- */
+.loading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+.loading p {
+  margin: 0 0 4px;
+}
+
+.spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

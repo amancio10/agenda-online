@@ -32,9 +32,11 @@ describe('BookingService', () => {
   afterEach(() => http.verify());
 
   it('loads busy slots on start', async () => {
+    expect(service.busyLoading()).toBe(true);
     http.expectOne('/api/slots/busy').flush([{ date: '2030-01-07', time: '09:00' }]);
     await settle();
 
+    expect(service.busyLoading()).toBe(false);
     expect(service.isBooked('2030-01-07', '09:00')).toBe(true);
     expect(service.bookedDates().has('2030-01-07')).toBe(true);
     expect(service.bookedTimes('2030-01-07')).toEqual(new Set(['09:00']));
@@ -116,5 +118,6 @@ describe('BookingService', () => {
     http.expectOne('/api/slots/busy').error(new ProgressEvent('error'));
     await settle();
     expect(service.loadError()).not.toBeNull();
+    expect(service.busyLoading()).toBe(false);
   });
 });

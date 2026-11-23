@@ -32,6 +32,7 @@ export class MyAgenda {
   private readonly now = signal(new Date());
 
   protected readonly loadError = this.bookingService.loadError;
+  protected readonly loading = this.bookingService.bookingsLoading;
   protected readonly tab = signal<Tab>('upcoming');
   /** Reunião com uma ação em andamento (desabilita os botões dela). */
   protected readonly busyId = signal<string | null>(null);

@@ -20,6 +20,12 @@ export class BookingService {
   /** Mensagem de erro quando a API não responde (ex.: servidor desligado). */
   readonly loadError = signal<string | null>(null);
 
+  /** true até a primeira resposta de horários ocupados (a API pode estar "acordando"). */
+  readonly busyLoading = signal(true);
+
+  /** true enquanto a lista completa da tela "Minha agenda" é carregada. */
+  readonly bookingsLoading = signal(false);
+
   /** Todos os agendamentos, ordenados por data e horário (carregue com `loadBookings`). */
   readonly bookings = computed(() =>
     [...this._bookings()].sort((a, b) =>
@@ -49,16 +55,21 @@ export class BookingService {
       this.loadError.set(null);
     } catch {
       this.loadError.set('Não foi possível carregar os horários. Tente novamente em instantes.');
+    } finally {
+      this.busyLoading.set(false);
     }
   }
 
   /** Carrega a lista completa de agendamentos (tela "Minha agenda"). */
   async loadBookings(): Promise<void> {
+    this.bookingsLoading.set(true);
     try {
       this._bookings.set(await firstValueFrom(this.http.get<Booking[]>(`${API_URL}/admin/bookings`)));
       this.loadError.set(null);
     } catch {
       this.loadError.set('Não foi possível carregar a agenda. Tente novamente em instantes.');
+    } finally {
+      this.bookingsLoading.set(false);
     }
   }
 

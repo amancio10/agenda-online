@@ -258,15 +258,18 @@ cd backend && ./mvnw test
 
 ## Publicação
 
-Arquitetura pensada para hospedagem gratuita:
+Tudo roda em planos gratuitos:
 
-| Parte | Opções |
-|---|---|
-| Front-end | Vercel, Netlify ou Cloudflare Pages (`npm run build` → `dist/`) |
-| API | Google Cloud Run ou Render (a porta vem da variável `PORT`) |
-| Banco | Neon (plano gratuito) |
+| Parte | Onde | Arquivo de configuração |
+|---|---|---|
+| Front-end | **Vercel** | [`vercel.json`](vercel.json) |
+| API | **Render** (Docker) | [`backend/Dockerfile`](backend/Dockerfile) |
+| Banco | **Neon** | scripts em [`backend/db/`](backend/db/) |
 
-Na produção, configure `CORS_ALLOWED_ORIGINS` com o endereço do front. Configure também o front para chamar a URL pública da API (`src/app/core/api.config.ts`) ou um *rewrite* `/api` na hospedagem.
+- **API no Render.** Crie um *Web Service* com Root Directory `backend` e Runtime **Docker**, e cadastre as variáveis de ambiente. A imagem é construída em duas etapas (compila com JDK e roda só com JRE), roda sem usuário root e limita a memória da JVM para caber nos 512 MB do plano gratuito.
+- **Front no Vercel.** O `vercel.json` encaminha `/api/*` para a API no Render. Para o navegador, front e API ficam na mesma origem, sem mudar código. As demais rotas vão para o `index.html`, para que um F5 em `/minha-agenda` funcione. Troque `SEU-APP.onrender.com` pela URL real do Render.
+- **API "dormindo".** No plano gratuito do Render, a API dorme depois de 15 minutos sem acesso e leva cerca de 1 minuto para voltar. O front mostra **"Carregando horários…"** e, se demorar, avisa que o servidor está iniciando.
+- **E-mail.** O plano gratuito do Render bloqueia as portas SMTP. Lá, o aviso por e-mail só funciona num plano pago ou por um provedor com API HTTP (ex.: Brevo).
 
 ---
 

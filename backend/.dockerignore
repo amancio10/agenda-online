@@ -1,0 +1,9 @@
+# Nada disso deve ir para a imagem (segredos ficam nas variáveis da hospedagem).
+target/
+.env
+.env.*
+.idea/
+.vscode/
+*.iml
+db/
+HELP.md

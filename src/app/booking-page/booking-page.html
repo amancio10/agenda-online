@@ -71,31 +71,45 @@
               <p class="error" role="alert">{{ error() }}</p>
             }
 
-            <div class="slots">
-              @for (slot of slots(); track slot.time) {
-                @if (slot.time === selectedTime()) {
-                  <div class="slot-row">
-                    <button type="button" class="slot active" (click)="toggleTime(slot.time)">
+            @if (loading()) {
+              <div class="loading" role="status" aria-live="polite">
+                <span class="spinner" aria-hidden="true"></span>
+                <div>
+                  <p>Carregando horários…</p>
+                  @if (slowStart()) {
+                    <p class="muted">
+                      O servidor está iniciando. Isso pode levar até 1 minuto na primeira visita.
+                    </p>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="slots">
+                @for (slot of slots(); track slot.time) {
+                  @if (slot.time === selectedTime()) {
+                    <div class="slot-row">
+                      <button type="button" class="slot active" (click)="toggleTime(slot.time)">
+                        {{ slot.time }}
+                      </button>
+                      <button type="button" class="book" (click)="goToForm()">Agendar</button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="slot"
+                      [class.taken]="slot.booked"
+                      [disabled]="slot.booked"
+                      [attr.aria-label]="slot.booked ? slot.time + ' (ocupado)' : slot.time"
+                      (click)="toggleTime(slot.time)"
+                    >
                       {{ slot.time }}
                     </button>
-                    <button type="button" class="book" (click)="goToForm()">Agendar</button>
-                  </div>
-                } @else {
-                  <button
-                    type="button"
-                    class="slot"
-                    [class.taken]="slot.booked"
-                    [disabled]="slot.booked"
-                    [attr.aria-label]="slot.booked ? slot.time + ' (ocupado)' : slot.time"
-                    (click)="toggleTime(slot.time)"
-                  >
-                    {{ slot.time }}
-                  </button>
+                  }
+                } @empty {
+                  <p class="muted">Nenhum horário disponível neste dia.</p>
                 }
-              } @empty {
-                <p class="muted">Nenhum horário disponível neste dia.</p>
-              }
-            </div>
+              </div>
+            }
           } @else {
             <p class="muted center">Não há dias disponíveis no momento.</p>
           }

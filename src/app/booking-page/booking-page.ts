@@ -55,6 +55,9 @@ export class BookingPage {
   protected readonly confirmed = signal<Booking | null>(null);
   protected readonly saving = signal(false);
   protected readonly loadError = this.bookingService.loadError;
+  protected readonly loading = this.bookingService.busyLoading;
+  /** Liga depois de alguns segundos carregando: provavelmente a API está "acordando". */
+  protected readonly slowStart = signal(false);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
@@ -120,7 +123,11 @@ export class BookingPage {
     }
 
     const timer = setInterval(() => this.now.set(new Date()), 60_000);
-    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+    const slow = setTimeout(() => this.slowStart.set(true), 4_000);
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(timer);
+      clearTimeout(slow);
+    });
   }
 
   protected prevMonth(): void {
