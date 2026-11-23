@@ -104,7 +104,7 @@ O código fica em `backend/` e está organizado por domínio (`auth`, `booking`,
 
 - **Sem agendamento duplo, mesmo com cliques simultâneos.** O banco tem uma restrição `UNIQUE (booking_date, booking_time)`. O serviço usa `saveAndFlush` e converte a violação dessa restrição em `409`. A garantia fica no banco, não só no código.
 - **Status "realizada".** A coluna `completed_at` guarda quando o administrador finalizou a reunião. O status (`OPEN`, `IN_PROGRESS`, `DONE`) é **calculado** a partir do horário e da duração configurada. Por isso uma reunião vira "realizada" sozinha ao passar do horário, sem precisar de tarefa agendada (*cron*).
-- **E-mail de aviso assíncrono.** O [`BookingNotifier`](backend/src/main/java/com/agendaonline/backend/booking/BookingNotifier.java) envia o aviso com `@Async`. O visitante não espera o SMTP, e uma falha no e-mail só é registrada no log, sem desfazer o agendamento. O recurso fica desligado enquanto as variáveis de e-mail estiverem vazias. Quebras de linha vindas do visitante são removidas do assunto, para evitar injeção de cabeçalhos.
+- **E-mail de aviso assíncrono.** O [`BookingNotifier`](backend/src/main/java/com/agendaonline/backend/booking/BookingNotifier.java) envia o aviso com `@Async` por dois caminhos: a **API HTTP do Brevo** ([`BrevoMailClient`](backend/src/main/java/com/agendaonline/backend/booking/BrevoMailClient.java), com `RestClient`), quando há chave configurada, ou **SMTP** (Spring Mail). O visitante não espera o envio, e uma falha no e-mail só é registrada no log, sem desfazer o agendamento. O recurso fica desligado enquanto as variáveis de e-mail estiverem vazias. Quebras de linha vindas do visitante são removidas do assunto, para evitar injeção de cabeçalhos.
 - **Configuração por variáveis de ambiente.** O [`DotEnv`](backend/src/main/java/com/agendaonline/backend/config/DotEnv.java) lê o `backend/.env.local` em desenvolvimento e converte a `DATABASE_URL` do Neon (`postgresql://usuario:senha@host/db`) para o formato JDBC. Em produção, as variáveis vêm da hospedagem.
 
 ### Segurança
@@ -226,7 +226,9 @@ Ficam em `backend/.env.local`, que é ignorado pelo Git. Em produção, cadastre
 | `JWT_SECRET` | sim | Segredo aleatório de no mínimo 32 caracteres para assinar os tokens |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | na 1ª execução | Criam o primeiro administrador (senha com 8+ caracteres) |
 | `NOTIFY_EMAIL` | não | Quem recebe o aviso de nova reunião |
-| `MAIL_USERNAME` / `MAIL_PASSWORD` | não | Conta SMTP que envia o aviso (no Gmail, use uma *senha de app*) |
+| `BREVO_API_KEY` | não | Chave da API do Brevo. Se preenchida, o aviso sai por HTTPS (funciona no Render gratuito) |
+| `MAIL_FROM` | com Brevo | Remetente do aviso. No Brevo, precisa ser um remetente verificado |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | não | Conta SMTP usada quando não há `BREVO_API_KEY` (no Gmail, use uma *senha de app*) |
 | `MAIL_HOST` / `MAIL_PORT` | não | Servidor SMTP (padrão `smtp.gmail.com:587`) |
 | `CORS_ALLOWED_ORIGINS` | não | Origens do front permitidas (padrão `http://localhost:4200`) |
 | `JWT_TTL` | não | Validade do login (padrão `8h`) |
@@ -252,7 +254,7 @@ cd backend && ./mvnw test
   - Menu para visitante e para administrador.
 - **Back-end:**
   - Testes de ponta a ponta das rotas (HTTP → segurança → JPA): permissões, `400`/`401`/`404`/`409`, login, listagem, finalização, cancelamento e CORS.
-  - Testes unitários do aviso por e-mail (com Mockito) e da conversão da `DATABASE_URL`.
+  - Testes unitários do aviso por e-mail (SMTP com Mockito e Brevo com `MockRestServiceServer`) e da conversão da `DATABASE_URL`.
 
 ---
 
@@ -269,7 +271,7 @@ Tudo roda em planos gratuitos:
 - **API no Render.** Crie um *Web Service* com Root Directory `backend` e Runtime **Docker**, e cadastre as variáveis de ambiente. A imagem é construída em duas etapas (compila com JDK e roda só com JRE), roda sem usuário root e limita a memória da JVM para caber nos 512 MB do plano gratuito.
 - **Front no Vercel.** O `vercel.json` encaminha `/api/*` para a API no Render. Para o navegador, front e API ficam na mesma origem, sem mudar código. As demais rotas vão para o `index.html`, para que um F5 em `/minha-agenda` funcione. Troque `SEU-APP.onrender.com` pela URL real do Render.
 - **API "dormindo".** No plano gratuito do Render, a API dorme depois de 15 minutos sem acesso e leva cerca de 1 minuto para voltar. O front mostra **"Carregando horários…"** e, se demorar, avisa que o servidor está iniciando.
-- **E-mail.** O plano gratuito do Render bloqueia as portas SMTP. Lá, o aviso por e-mail só funciona num plano pago ou por um provedor com API HTTP (ex.: Brevo).
+- **E-mail.** O plano gratuito do Render bloqueia as portas SMTP. Por isso, em produção o aviso sai pela **API HTTP do Brevo** (plano gratuito de 300 e-mails por dia). Basta cadastrar `BREVO_API_KEY`, `MAIL_FROM` e `NOTIFY_EMAIL` no Render.
 
 ---
 

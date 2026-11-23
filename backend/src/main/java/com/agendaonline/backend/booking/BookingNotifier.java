@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -14,8 +13,11 @@ import org.springframework.stereotype.Component;
 /**
  * Avisa o administrador por e-mail quando um visitante marca uma reunião.
  *
- * <p>Roda em segundo plano ({@code @Async}): o visitante não espera o SMTP, e uma falha
- * no envio só é registrada no log — o agendamento já está salvo.
+ * <p>Envia pela API HTTP do Brevo quando {@code BREVO_API_KEY} está definida (funciona em
+ * hospedagens que bloqueiam SMTP); senão, usa o SMTP configurado em {@code spring.mail.*}.
+ *
+ * <p>Roda em segundo plano ({@code @Async}): o visitante não espera o envio, e uma falha
+ * só é registrada no log — o agendamento já está salvo.
  * Fica desligado enquanto {@code app.notify.to} ou {@code app.notify.from} estiverem vazios.
  */
 @Component
@@ -26,19 +28,21 @@ public class BookingNotifier {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
     private final ObjectProvider<JavaMailSender> mailSender;
+    private final BrevoMailClient brevo;
     private final String to;
     private final String from;
 
-    public BookingNotifier(ObjectProvider<JavaMailSender> mailSender,
+    public BookingNotifier(ObjectProvider<JavaMailSender> mailSender, BrevoMailClient brevo,
             @Value("${app.notify.to:}") String to,
             @Value("${app.notify.from:}") String from) {
         this.mailSender = mailSender;
+        this.brevo = brevo;
         this.to = to.trim();
         this.from = from.trim();
     }
 
     public boolean isEnabled() {
-        return !to.isEmpty() && !from.isEmpty() && mailSender.getIfAvailable() != null;
+        return !to.isEmpty() && !from.isEmpty() && (brevo.isConfigured() || mailSender.getIfAvailable() != null);
     }
 
     @Async
@@ -46,10 +50,16 @@ public class BookingNotifier {
         if (!isEnabled()) {
             return;
         }
+        String via = brevo.isConfigured() ? "Brevo" : "SMTP";
         try {
-            mailSender.getObject().send(message(booking));
-            log.info("Aviso de novo agendamento enviado ({} {}).", booking.getDate(), booking.getTime());
-        } catch (MailException e) {
+            SimpleMailMessage msg = message(booking);
+            if (brevo.isConfigured()) {
+                brevo.send(msg);
+            } else {
+                mailSender.getObject().send(msg);
+            }
+            log.info("Aviso de novo agendamento enviado via {} ({} {}).", via, booking.getDate(), booking.getTime());
+        } catch (RuntimeException e) { // MailException (SMTP) ou RestClientException (Brevo)
             log.warn("Não foi possível enviar o aviso de novo agendamento: {}", e.getMessage());
         }
     }
