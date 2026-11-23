@@ -9,6 +9,6 @@ export const PROFILE = {
   profession: 'Desenvolvedor',
   education: 'ADS - Impacta Tecnologia',
   location: 'São Paulo, Brasil',
-  portfolio: 'https://amancio10.github.io',
+  portfolio: 'https://amancio10.github.io/portfolio/',
   linkedin: 'https://www.linkedin.com/in/amancio-santos/',
 };
