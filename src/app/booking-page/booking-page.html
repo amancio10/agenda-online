@@ -58,6 +58,9 @@
     </div>
 
     <div class="side">
+      @if (loadError(); as msg) {
+        <p class="error load-error" role="alert">{{ msg }}</p>
+      }
       @switch (step()) {
         @case ('pick') {
           @if (selectedDate(); as date) {
@@ -125,7 +128,9 @@
               <span>Assunto <span class="muted">(opcional)</span></span>
               <textarea formControlName="topic" rows="3"></textarea>
             </label>
-            <button type="submit" class="book full">Confirmar agendamento</button>
+            <button type="submit" class="book full" [disabled]="saving()">
+              {{ saving() ? 'Agendando…' : 'Confirmar agendamento' }}
+            </button>
           </form>
         }
 

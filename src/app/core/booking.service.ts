@@ -1,21 +1,26 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Booking, NewBooking, SlotTakenError } from './booking.model';
-
-const STORAGE_KEY = 'agenda-online:bookings';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { API_URL } from './api.config';
+import { Booking, BusySlot, NewBooking, SlotTakenError } from './booking.model';
 
 /**
- * Guarda os agendamentos.
+ * Agendamentos guardados no banco (Neon) por meio da API Spring Boot.
  *
- * Hoje os dados ficam no localStorage do navegador. Para que visitantes de
- * outros computadores vejam os horários ocupados, troque load/persist por
- * chamadas a uma API ou banco (Firebase, Supabase, etc.) — o resto do app
- * não precisa mudar.
+ * - Visitantes só recebem os horários ocupados (`/slots/busy`), sem nomes ou e-mails.
+ * - A lista completa (`/admin/bookings`, exige login) é usada pela tela "Minha agenda".
  */
 @Injectable({ providedIn: 'root' })
 export class BookingService {
-  private readonly _bookings = signal<Booking[]>(this.load());
+  private readonly http = inject(HttpClient);
 
-  /** Todos os agendamentos, ordenados por data e horário. */
+  private readonly _busy = signal<BusySlot[]>([]);
+  private readonly _bookings = signal<Booking[]>([]);
+
+  /** Mensagem de erro quando a API não responde (ex.: servidor desligado). */
+  readonly loadError = signal<string | null>(null);
+
+  /** Todos os agendamentos, ordenados por data e horário (carregue com `loadBookings`). */
   readonly bookings = computed(() =>
     [...this._bookings()].sort((a, b) =>
       `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
@@ -23,53 +28,71 @@ export class BookingService {
   );
 
   /** Datas ('YYYY-MM-DD') que têm pelo menos uma reunião. */
-  readonly bookedDates = computed(() => new Set(this._bookings().map((b) => b.date)));
+  readonly bookedDates = computed(() => new Set(this._busy().map((b) => b.date)));
 
   constructor() {
-    // Mantém abas abertas sincronizadas.
-    globalThis.addEventListener?.('storage', (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) this._bookings.set(this.load());
-    });
+    void this.refreshBusy();
   }
 
   bookedTimes(date: string): Set<string> {
-    return new Set(this._bookings().filter((b) => b.date === date).map((b) => b.time));
+    return new Set(this._busy().filter((b) => b.date === date).map((b) => b.time));
   }
 
   isBooked(date: string, time: string): boolean {
-    return this._bookings().some((b) => b.date === date && b.time === time);
+    return this._busy().some((b) => b.date === date && b.time === time);
   }
 
-  add(input: NewBooking): Booking {
-    // Relê o storage para evitar reservar um horário pego em outra aba.
-    this._bookings.set(this.load());
-    if (this.isBooked(input.date, input.time)) throw new SlotTakenError();
-
-    const booking: Booking = {
-      ...input,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    this._bookings.update((list) => [...list, booking]);
-    this.persist();
-    return booking;
-  }
-
-  cancel(id: string): void {
-    this._bookings.update((list) => list.filter((b) => b.id !== id));
-    this.persist();
-  }
-
-  private load(): Booking[] {
+  /** Atualiza os horários ocupados (visão pública). */
+  async refreshBusy(): Promise<void> {
     try {
-      const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Booking[]) : [];
+      this._busy.set(await firstValueFrom(this.http.get<BusySlot[]>(`${API_URL}/slots/busy`)));
+      this.loadError.set(null);
     } catch {
-      return [];
+      this.loadError.set('Não foi possível carregar os horários. Tente novamente em instantes.');
     }
   }
 
-  private persist(): void {
-    globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(this._bookings()));
+  /** Carrega a lista completa de agendamentos (tela "Minha agenda"). */
+  async loadBookings(): Promise<void> {
+    try {
+      this._bookings.set(await firstValueFrom(this.http.get<Booking[]>(`${API_URL}/admin/bookings`)));
+      this.loadError.set(null);
+    } catch {
+      this.loadError.set('Não foi possível carregar a agenda. Tente novamente em instantes.');
+    }
+  }
+
+  async add(input: NewBooking): Promise<Booking> {
+    try {
+      const booking = await firstValueFrom(this.http.post<Booking>(`${API_URL}/bookings`, input));
+      this._busy.update((list) => [...list, { date: booking.date, time: booking.time }]);
+      this._bookings.update((list) => [...list, booking]);
+      return booking;
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 409) {
+        void this.refreshBusy();
+        throw new SlotTakenError();
+      }
+      throw err;
+    }
+  }
+
+  /** Marca a reunião como realizada. */
+  async complete(id: string): Promise<void> {
+    const updated = await firstValueFrom(
+      this.http.post<Booking>(`${API_URL}/admin/bookings/${id}/complete`, null),
+    );
+    this._bookings.update((list) => list.map((b) => (b.id === id ? updated : b)));
+  }
+
+  async cancel(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${API_URL}/admin/bookings/${id}`));
+    const removed = this._bookings().find((b) => b.id === id);
+    this._bookings.update((list) => list.filter((b) => b.id !== id));
+    if (removed) {
+      this._busy.update((list) =>
+        list.filter((b) => !(b.date === removed.date && b.time === removed.time)),
+      );
+    }
   }
 }

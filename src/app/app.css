@@ -74,3 +74,30 @@ nav {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Botão Entrar / Sair */
+.auth-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+nav a.auth-btn {
+  color: var(--text);
+  padding: 5px 14px;
+}
+
+.auth-btn:hover {
+  background: var(--accent-soft);
+}
+
+.auth-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}

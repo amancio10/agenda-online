@@ -1,45 +1,97 @@
 <section class="panel">
   <h2>Minha agenda</h2>
+  @if (loadError(); as msg) {
+    <p class="empty" role="alert">{{ msg }}</p>
+  }
 
-  <h3>Próximas reuniões</h3>
-  @for (group of upcoming(); track group.date) {
-    <div class="day">
-      <p class="day-label">{{ group.label }}</p>
-      @for (b of group.bookings; track b.id) {
-        <article class="booking">
-          <span class="time">{{ b.time }}</span>
-          <div class="info">
-            <strong>{{ b.name }}</strong>
-            <a [href]="'mailto:' + b.email">{{ b.email }}</a>
-            @if (b.topic) {
-              <p>{{ b.topic }}</p>
-            }
-          </div>
-          <button type="button" class="cancel" (click)="cancel(b)">Cancelar</button>
-        </article>
+  <div class="tabs" role="tablist" aria-label="Reuniões">
+    <button
+      type="button"
+      role="tab"
+      id="tab-upcoming"
+      aria-controls="panel-upcoming"
+      [attr.aria-selected]="tab() === 'upcoming'"
+      [class.active]="tab() === 'upcoming'"
+      (click)="tab.set('upcoming')"
+    >
+      Próximas <span class="count">{{ upcomingCount() }}</span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      id="tab-done"
+      aria-controls="panel-done"
+      [attr.aria-selected]="tab() === 'done'"
+      [class.active]="tab() === 'done'"
+      (click)="tab.set('done')"
+    >
+      Realizadas <span class="count">{{ doneCount() }}</span>
+    </button>
+  </div>
+
+  @if (tab() === 'upcoming') {
+    <div role="tabpanel" id="panel-upcoming" aria-labelledby="tab-upcoming">
+      @for (group of upcoming(); track group.date) {
+        <div class="day">
+          <p class="day-label">{{ group.label }}</p>
+          @for (item of group.items; track item.booking.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: item, actions: true }" />
+          }
+        </div>
+      } @empty {
+        <p class="empty">
+          Nenhuma reunião marcada. <a routerLink="/">Ver calendário</a>
+        </p>
       }
     </div>
-  } @empty {
-    <p class="empty">
-      Nenhuma reunião marcada ainda. <a routerLink="/">Ver calendário</a>
-    </p>
-  }
-
-  @if (past().length) {
-    <h3>Anteriores</h3>
-    @for (group of past(); track group.date) {
-      <div class="day past">
-        <p class="day-label">{{ group.label }}</p>
-        @for (b of group.bookings; track b.id) {
-          <article class="booking">
-            <span class="time">{{ b.time }}</span>
-            <div class="info">
-              <strong>{{ b.name }}</strong>
-              <span>{{ b.email }}</span>
-            </div>
-          </article>
-        }
-      </div>
-    }
+  } @else {
+    <div role="tabpanel" id="panel-done" aria-labelledby="tab-done">
+      @for (group of done(); track group.date) {
+        <div class="day done">
+          <p class="day-label">{{ group.label }}</p>
+          @for (item of group.items; track item.booking.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: item, actions: false }" />
+          }
+        </div>
+      } @empty {
+        <p class="empty">Nenhuma reunião realizada ainda.</p>
+      }
+    </div>
   }
 </section>
+
+<ng-template #row let-item let-actions="actions">
+  <article class="booking">
+    <span class="time">{{ item.booking.time }}</span>
+    <div class="info">
+      <div class="title">
+        <strong>{{ item.booking.name }}</strong>
+        <span class="status" [class]="item.status">{{ item.label }}</span>
+      </div>
+      <a [href]="'mailto:' + item.booking.email">{{ item.booking.email }}</a>
+      @if (item.booking.topic) {
+        <p>{{ item.booking.topic }}</p>
+      }
+    </div>
+    @if (actions) {
+      <div class="actions">
+        <button
+          type="button"
+          class="complete"
+          [disabled]="busyId() === item.booking.id"
+          (click)="complete(item.booking)"
+        >
+          Finalizar
+        </button>
+        <button
+          type="button"
+          class="cancel"
+          [disabled]="busyId() === item.booking.id"
+          (click)="cancel(item.booking)"
+        >
+          Cancelar
+        </button>
+      </div>
+    }
+  </article>
+</ng-template>

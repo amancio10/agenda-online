@@ -12,12 +12,45 @@ h2 {
   font-size: 1.3rem;
 }
 
-h3 {
-  margin: 24px 0 12px;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+/* ---------- Abas ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0 20px;
+  border-bottom: 1px solid var(--surface-alt);
+}
+
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
   color: var(--text-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.count {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.tabs button.active .count {
+  background: var(--accent-soft);
 }
 
 .day + .day {
@@ -71,20 +104,75 @@ h3 {
   white-space: pre-wrap;
 }
 
-.cancel {
+.title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Status ---------- */
+.status {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status.open {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.status.in-progress {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+.status.done {
+  background: rgba(34, 197, 94, 0.18);
+  color: #15803d;
+}
+
+:root.dark .status.in-progress {
+  color: #fbbf24;
+}
+
+:root.dark .status.done {
+  color: #4ade80;
+}
+
+/* ---------- Ações ---------- */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.actions button {
   border: 0;
   background: none;
-  color: var(--danger);
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
+  padding: 2px 0;
 }
 
-.past {
-  opacity: 0.6;
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
-.past .time {
+.complete {
+  color: var(--accent);
+}
+
+.cancel {
+  color: var(--danger);
+}
+
+.done .time {
   background: #9ca3af;
 }
 

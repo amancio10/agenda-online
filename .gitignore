@@ -42,3 +42,30 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+
+# ---------------------------------------------------------------------
+# Dados sensíveis — este repositório é público
+# ---------------------------------------------------------------------
+
+# Variáveis de ambiente (conexão com o banco, JWT_SECRET, senha do admin).
+# Só o .env.example, sem valores reais, vai para o GitHub.
+.env
+.env.*
+!.env.example
+
+# Chaves, certificados e credenciais de nuvem (ex.: conta de serviço do Google Cloud).
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials*.json
+service-account*.json
+*-sa-key.json
+
+# Configurações locais do Claude Code
+.claude/settings.local.json

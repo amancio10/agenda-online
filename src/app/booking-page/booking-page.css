@@ -303,6 +303,10 @@ p.error {
   margin: -12px 0 12px;
 }
 
+p.error.load-error {
+  margin: 0 0 12px;
+}
+
 .done {
   display: flex;
   flex-direction: column;

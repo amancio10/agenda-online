@@ -53,6 +53,8 @@ export class BookingPage {
   protected readonly step = signal<Step>('pick');
   protected readonly error = signal<string | null>(null);
   protected readonly confirmed = signal<Booking | null>(null);
+  protected readonly saving = signal(false);
+  protected readonly loadError = this.bookingService.loadError;
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
@@ -149,7 +151,7 @@ export class BookingPage {
     this.step.set('pick');
   }
 
-  protected confirm(): void {
+  protected async confirm(): Promise<void> {
     const date = this.selectedDate();
     const time = this.selectedTime();
     if (!date || !time) return;
@@ -158,9 +160,12 @@ export class BookingPage {
       return;
     }
 
+    if (this.saving()) return;
+
     const { name, email, topic } = this.form.getRawValue();
+    this.saving.set(true);
     try {
-      const booking = this.bookingService.add({
+      const booking = await this.bookingService.add({
         date: toIsoDate(date),
         time,
         name: name.trim(),
@@ -171,10 +176,15 @@ export class BookingPage {
       this.form.reset();
       this.step.set('done');
     } catch (err) {
-      if (!(err instanceof SlotTakenError)) throw err;
-      this.error.set('Esse horário acabou de ser reservado. Escolha outro, por favor.');
-      this.selectedTime.set(null);
-      this.step.set('pick');
+      if (err instanceof SlotTakenError) {
+        this.error.set('Esse horário acabou de ser reservado. Escolha outro, por favor.');
+        this.selectedTime.set(null);
+        this.step.set('pick');
+      } else {
+        this.error.set('Não foi possível concluir o agendamento. Tente novamente.');
+      }
+    } finally {
+      this.saving.set(false);
     }
   }
 

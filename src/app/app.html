@@ -4,7 +4,14 @@
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
       Agendar
     </a>
-    <a routerLink="/minha-agenda" routerLinkActive="active">Minha agenda</a>
+    @if (auth.isLoggedIn()) {
+      <a routerLink="/minha-agenda" routerLinkActive="active">Minha agenda</a>
+      <button type="button" class="auth-btn" (click)="auth.logout()" [attr.title]="auth.email()">
+        Sair
+      </button>
+    } @else {
+      <a routerLink="/login" class="auth-btn" routerLinkActive="active">Entrar</a>
+    }
     <button
       type="button"
       class="theme-toggle"
